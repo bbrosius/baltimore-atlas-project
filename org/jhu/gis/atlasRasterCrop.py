@@ -1,30 +1,28 @@
+# Loops through a collection of folders for atlas images and crops the raster images to match the shape file grid
+import arcpy, arcgisscripting, os
 
-import arcpy, arcgisscripting
+baseImageDir = "C:/Workspace/Baltimore_Atlas/1897_Atlas"
+imageDir = "Rectified Data"
+shapeFile ="C:/Workspace/Baltimore_Atlas/OrthoIndexDissolved2Sheets.shp"
 
-# Open a searchcursor
-#  Input: C:/Data/Counties.shp
-#  FieldList: NAME; STATE_NAME; POP2000
-#  SortFields: STATE_NAME A; POP2000 D
-#
-rows = arcpy.SearchCursor("C:/Workspace/Baltimore_Atlas/OrthoIndexDissolved2Sheets.shp", "IndexSht = '1n-1e'", "", "Shape; IndexSht",
-                          "")
-currentState = ""
 
-# Iterate through the rows in the cursor
-#
-for row in rows:
+for fn in os.listdir(baseImageDir):
+    where = "IndexSht = '" + fn.lower() + "'"
+    rows = arcpy.SearchCursor(shapeFile, where, "", "Shape; IndexSht", "")
 
-    # Print out the state name, county, and population
-    #
-    print "IndexSht: " + row.IndexSht
-
+    row = rows.next()
     extent = row.shape.extent
-    print extent.XMin,extent.YMin,extent.XMax,extent.YMax
+    extentStr = str(extent.XMin) + " " + str(extent.YMin) + " " + str(extent.XMax) + " " + str(extent.YMax)
 
-raster = arcgisscripting.Raster('1N-1E1.tif')
+    referencedImgDir = baseImageDir + "/" + fn + "/" + imageDir
 
-print raster.extent
+    if os.path.exists(referencedImgDir) :
+        for image in os.listdir(referencedImgDir) :
+            if image.endswith(".tif") :
+                imageName = os.path.splitext(image)[0]
+                outFile = referencedImgDir + "/" + imageName + "clipped.tif"
 
-extentStr = str(extent.XMin) + " " + str(extent.YMin) + " " + str(extent.XMax) + " " + str(extent.YMax)
-print extentStr
-arcpy.Clip_management(raster, extentStr, "C:/Workspace/Baltimore_Atlas/1N-1E1-Clipped.tif", "#", "#", "NONE")
+                raster = arcgisscripting.Raster(referencedImgDir + "/" + image)
+
+                print "Clipping: " + imageName
+                arcpy.Clip_management(raster, extentStr, outFile, "#", "#", "NONE")
