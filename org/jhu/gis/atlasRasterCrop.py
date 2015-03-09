@@ -4,7 +4,7 @@ import arcpy, arcgisscripting, os
 baseImageDir = "C:/Workspace/Baltimore_Atlas/1897_Atlas"
 imageDir = "Rectified Data"
 shapeFile ="C:/Workspace/Baltimore_Atlas/OrthoIndexDissolved2Sheets.shp"
-
+arcpy.env.overwriteOutput = True
 
 for fn in os.listdir(baseImageDir):
     where = "IndexSht = '" + fn.lower() + "'"
@@ -18,7 +18,7 @@ for fn in os.listdir(baseImageDir):
 
     if os.path.exists(referencedImgDir) :
         for image in os.listdir(referencedImgDir) :
-            if image.endswith(".tif") :
+            if image.endswith(".tif") and "clipped" not in image :
                 imageName = os.path.splitext(image)[0]
                 outFile = referencedImgDir + "/" + imageName + "clipped.tif"
 
