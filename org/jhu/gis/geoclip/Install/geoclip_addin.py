@@ -19,16 +19,14 @@ class RunButtonClass(object):
     def onClick(self):
         global pointCount
         if pointCount < 4:
-            pythonaddins.MessageBox("Select four map points before running", "Error", 0);
+            pythonaddins.MessageBox("Select four map points before running", "Error", 0)
         else:
             global imageFile
             global shapeFile
             global  mapExtent
-            global dialogShown
             arcpy.env.overwriteOutput = True
 
             arcpy.env.outputCoordinateSystem = arcpy.Describe(shapeFile).spatialReference
-            print imageFile[:-4]
             where = "IndexSht = '" + imageFile[:-4].lower() + "'"
             rows = arcpy.SearchCursor(shapeFile, where, "", "Shape; IndexSht", "")
 
@@ -56,7 +54,6 @@ class RunButtonClass(object):
             #Reset variables
             pointCount = 0
             mapExtent = ""
-            dialogShown = False
 class SelectImageBox(object):
     """Implementation for geoclip_addin.selectImageBox (ComboBox)"""
     def __init__(self):
@@ -77,6 +74,11 @@ class SelectImageBox(object):
         layers = arcpy.mapping.ListLayers(self.mxd, selection)
         for layer in layers:
             saveDir = ntpath.dirname(layer.dataSource)
+        #reset selection tool
+        global  mapExtent
+        global dialogShown
+        mapExtent = ""
+        dialogShown = False
     def onFocus(self, focused):
         if focused:
             self.mxd = arcpy.mapping.MapDocument('current')
@@ -110,7 +112,7 @@ class SelectPointsTool(object):
         if not dialogShown:
             pythonaddins.MessageBox("Select the top left corner of the map", "Selected Map Points", 0)
             dialogShown = True
-    def onDeactivate(self):
+    def deactivate(self):
         global mapExtent
         global pointCount
         pointCount = 0
@@ -130,6 +132,10 @@ class ShapeFileComboBox(object):
     def onSelChange(self, selection):
         global shapeFile
         shapeFile = selection
+        global  mapExtent
+        global dialogShown
+        mapExtent = ""
+        dialogShown = False
     def onFocus(self, focused):
         if focused:
             self.mxd = arcpy.mapping.MapDocument('current')
