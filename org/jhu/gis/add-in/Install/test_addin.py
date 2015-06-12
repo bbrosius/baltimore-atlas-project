@@ -53,21 +53,25 @@ class RunClass(object):
             rows = arcpy.SearchCursor(shapeFile, where, "", "Shape; IndexSht", "")
 
             row = rows.next()
-            extent = row.shape.extent
-            extentStr = str(extent.XMin) + " " + str(extent.YMin) + " " + str(extent.XMax) + " " + str(extent.YMax)
+            if row is None:
+                print "Unable to find shape file index for: " + fn.lower()
+            else:
 
-            referencedImgDir = baseImageDir + "/" + fn + "/" + imageDir
+                extent = row.shape.extent
+                extentStr = str(extent.XMin) + " " + str(extent.YMin) + " " + str(extent.XMax) + " " + str(extent.YMax)
 
-            if os.path.exists(referencedImgDir) :
-                for image in os.listdir(referencedImgDir) :
-                    if image.endswith(".tif") and "clipped" not in image :
-                        imageName = os.path.splitext(image)[0]
-                        outFile = referencedImgDir + "/" + imageName + "clipped.tif"
+                referencedImgDir = baseImageDir + "/" + fn + "/" + imageDir
 
-                        raster = arcgisscripting.Raster(referencedImgDir + "/" + image)
+                if os.path.exists(referencedImgDir) :
+                    for image in os.listdir(referencedImgDir) :
+                        if image.endswith(".tif") and "clipped" not in image :
+                            imageName = os.path.splitext(image)[0]
+                            outFile = referencedImgDir + "/" + imageName + "clipped.tif"
 
-                        print "Clipping: " + imageName
-                        arcpy.Clip_management(raster, extentStr, outFile, "#", "#", "NONE")
+                            raster = arcgisscripting.Raster(referencedImgDir + "/" + image)
+
+                            print "Clipping: " + imageName
+                            arcpy.Clip_management(raster, extentStr, outFile, "#", "#", "NONE")
 
 class ShapeFileClass(object):
     """Implementation for baltimore_atlas_toolbar.shpfilecombobox (ComboBox)"""

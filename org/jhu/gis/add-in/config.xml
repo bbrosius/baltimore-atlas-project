@@ -3,7 +3,7 @@
   <Name>Baltimore Atlas Clip Tool</Name>
   <AddInID>{dc492960-cb4b-4f08-b7d7-b1c0f66c4198}</AddInID>
   <Description>Tool for clipping baltimore atlas images</Description>
-  <Version>1.0</Version>
+  <Version>1.1</Version>
   <Image>Images\logo.png</Image>
   <Author>Johns Hopkins University</Author>
   <Company>Johns Hopkins University</Company>

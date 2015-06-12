@@ -21,6 +21,8 @@ class RunButtonClass(object):
         if pointCount < 4:
             pythonaddins.MessageBox("Select four map points before running", "Error", 0)
         else:
+            #Reset variables
+            pointCount = 0
             global imageFile
             global shapeFile
             global  mapExtent
@@ -31,29 +33,34 @@ class RunButtonClass(object):
             rows = arcpy.SearchCursor(shapeFile, where, "", "Shape; IndexSht", "")
 
             row = rows.next()
-            extent = row.shape.extent
-            parentDir = os.path.join(saveDir, dataDir)
-            if not os.path.exists(parentDir):
-                os.makedirs(parentDir)
-            referencedFile = os.path.join(parentDir, imageFile[:-4] + "_referenced.tif")
+            if row is None:
+                print "Unable to find shape file index for: " + imageFile[:-4].lower()
+            else:
+                extent = row.shape.extent
+                parentDir = os.path.join(saveDir, dataDir)
+                if not os.path.exists(parentDir):
+                    os.makedirs(parentDir)
+                referencedFile = os.path.join(parentDir, imageFile[:-4] + "_referenced.tif")
 
-            ##Define target control points
-            target_pnt = "'" + str(extent.XMin) + " " + str(extent.YMax) + "';'" + str(extent.XMax) + " " + str(extent.YMax) + "';'" + str(extent.XMax) + " " + str(extent.YMin) + "';'" + str(extent.XMin) + " " + str(extent.YMin) + "'"
+                ##Define target control points
+                target_pnt = "'" + str(extent.XMin) + " " + str(extent.YMax) + "';'" + str(extent.XMax) + " " + str(extent.YMax) + "';'" + str(extent.XMax) + " " + str(extent.YMin) + "';'" + str(extent.XMin) + " " + str(extent.YMin) + "'"
 
-            print "Georeferencing: " + imageFile
-            print "Target points: " + target_pnt
-            print "Map extent: " + mapExtent
-            print "Reference file: " + referencedFile
-            arcpy.Warp_management(imageFile, mapExtent, target_pnt, referencedFile, "POLYORDER1",
-                                      "NEAREST")
+                print "Georeferencing: " + imageFile
+                print "Target points: " + target_pnt
+                print "Map extent: " + mapExtent
+                print "Reference file: " + referencedFile
+                try:
+                    arcpy.Warp_management(imageFile, mapExtent, target_pnt, referencedFile, "POLYORDER1",
+                                          "NEAREST")
+                except:
+                    print "Error georeferencing image please ensure 4 control points were set."
+                    mapExtent = ""
+                clippedFile = os.path.join(parentDir, imageFile[:-4] + "_clipped.tif")
+                extentStr = str(extent.XMin) + " " + str(extent.YMin) + " " + str(extent.XMax) + " " + str(extent.YMax)
+                arcpy.Clip_management(referencedFile, extentStr, clippedFile, "#", "#", "NONE")
 
-            clippedFile = os.path.join(parentDir, imageFile[:-4] + "_clipped.tif")
-            extentStr = str(extent.XMin) + " " + str(extent.YMin) + " " + str(extent.XMax) + " " + str(extent.YMax)
-            arcpy.Clip_management(referencedFile, extentStr, clippedFile, "#", "#", "NONE")
 
-            #Reset variables
-            pointCount = 0
-            mapExtent = ""
+
 class SelectImageBox(object):
     """Implementation for geoclip_addin.selectImageBox (ComboBox)"""
     def __init__(self):
@@ -75,9 +82,7 @@ class SelectImageBox(object):
         for layer in layers:
             saveDir = ntpath.dirname(layer.dataSource)
         #reset selection tool
-        global  mapExtent
         global dialogShown
-        mapExtent = ""
         dialogShown = False
     def onFocus(self, focused):
         if focused:
@@ -99,7 +104,7 @@ class SelectPointsTool(object):
         pointCount += 1
         if pointCount < 4:
             mapExtent += "'" + str(x) + " " + str(y) + "';"
-        else:
+        elif pointCount == 4:
             mapExtent += "'" + str(x) + " " + str(y) + "'"
         if pointCount == 1:
             pythonaddins.MessageBox("Select the top right corner of the map", "Selected Map Points", 0)
@@ -113,10 +118,8 @@ class SelectPointsTool(object):
             pythonaddins.MessageBox("Select the top left corner of the map", "Selected Map Points", 0)
             dialogShown = True
     def deactivate(self):
-        global mapExtent
-        global pointCount
-        pointCount = 0
-        mapExtent = ""
+        global dialogShown
+        dialogShown = False
 
 class ShapeFileComboBox(object):
     def __init__(self):
@@ -132,9 +135,7 @@ class ShapeFileComboBox(object):
     def onSelChange(self, selection):
         global shapeFile
         shapeFile = selection
-        global  mapExtent
         global dialogShown
-        mapExtent = ""
         dialogShown = False
     def onFocus(self, focused):
         if focused:
